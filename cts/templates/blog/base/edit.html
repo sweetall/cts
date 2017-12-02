@@ -1,0 +1,237 @@
+{% extends "blog/../base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+    <!-- left column -->
+    <div class="col-md-12">
+        <!-- general form elements -->
+        <div class="box box-primary">
+            <!-- form start -->
+            <form role="form" id="editArticle">
+{#                    {% csrf_token %}#}
+                <div class="box-body form-horizontal">
+                    <div class="form-group">
+                        <label for="inputTitle" class="col-sm-1 control-label">*标题</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputTitle" name="title" placeholder="请输入标题">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputContent" class="col-sm-1 control-label">*内容</label>
+                        <div class="col-sm-10">
+                            <textarea id="inputContent" name="content" rows="20" cols="80"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputLabel" class="col-sm-1 control-label">标签</label>
+                        <div class="col-sm-11">
+                            <input type="text" style="width: 30em" class="form-control" id="inputLabel" placeholder="请输入标签" name="label">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputCategory" class="col-sm-1 control-label">*分类</label>
+                        <div class="col-sm-11">
+                            <select style="width: 10em" class="form-control" id="inputCategory" name="category">
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inputFile" class="col-sm-1 control-label">附件</label>
+                        <div class="col-sm-11" style="margin: 10px auto">
+                            <input type="file" id="inputFile" name="file_field">
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.box-body -->
+
+                <div class="box-footer form-inline" style="text-align:center; width:100%;height:100%;margin:0; ">
+                    <div class="form-group">
+                        <div id="inputState">
+                            <label style="padding: 5px">
+                                <input type="radio" name="state" class="minimal" checked value=1>&nbsp;&nbsp;发布
+                            </label>
+                            <label style="padding: 5px">
+                                <input type="radio" name="state" class="minimal" value=2>&nbsp;&nbsp;隐藏
+                            </label>
+                            <label style="padding: 5px">
+                                <input type="radio" name="state" class="minimal" value=3>&nbsp;&nbsp;存稿
+                            </label>
+                        </div>
+                    </div>
+                    <button style="width: 60px; padding: 5px" type="button" onclick="submitEdit()" class="btn btn-primary">提交</button>
+                </div>
+            </form>
+        </div>
+      <!-- /.box -->
+    </div>
+    </div>
+
+</section>
+<!-- /.content -->
+{% endblock %}
+
+{% block script %}
+<!-- Editor -->
+<script src="{% static "bower_components/kindeditor/kindeditor.js" %}"></script>
+<script src="{% static "bower_components/kindeditor/lang/zh_CN.js" %}"></script>
+<!-- Bootstrap WYSIHTML5 -->
+<script>
+var editor;
+KindEditor.options.filterMode = false;
+KindEditor.ready(function(K) {
+    var options = {
+        width: '100%',
+        miniWidth: '600px',
+        height: '500px',
+        miniHeight: '600px',
+        resizeType: 1, //2时可以拖动改变宽度和高度，1时只能改变高度，0时不能拖动。
+        newlineTag: 'br', //default 'p'
+        fillDescAfterUploadImage: true,
+        uploadJson: '/cts/upload_image/ke_image',
+        'items': [
+            'source', '|', 'undo', 'redo', '|', 'preview', 'print', 'template', 'code', 'cut', 'copy', 'paste',
+            'plainpaste', 'wordpaste', '|', 'justifyleft', 'justifycenter', 'justifyright',
+            'justifyfull', 'insertorderedlist', 'insertunorderedlist', 'indent', 'outdent', 'subscript',
+            'superscript', 'clearhtml', 'quickformat', '|', 'fullscreen', '/',
+            'formatblock', 'fontname', 'fontsize', '|', 'forecolor', 'hilitecolor', 'bold',
+            'italic', 'underline', 'strikethrough', 'lineheight', 'removeformat', '|', 'image', 'multiimage',
+            'flash', 'table', 'hr', 'emoticons', 'baidumap', 'pagebreak',
+            'anchor', 'link', 'unlink', 'selectall', '|', 'about'
+        ]  //'media', 'insertfile',
+    };
+    editor = K.create('#inputContent',options);
+});
+</script>
+
+<script>
+    $('#nowStation').html('编辑博文');
+    $(function () {
+        $.ajaxSetup({
+            headers: { "X-CSRFToken": getCookie("csrftoken") }
+        });
+    });
+
+    function getCookie(name)
+    {
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+
+        if(arr=document.cookie.match(reg))
+
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+</script>
+
+<script>
+    $.ajax({
+        url: '/cts/blog/api/category/',
+        type: 'get',
+        data: {},
+        dataType: 'JSON',
+        async: false,
+        success: function (data) {
+            var options = '';
+            for (var i in data){
+                options = options + '<option value=' + data[i]['id'] + '>' + data[i]['value']+ '</option>'
+            }
+            $('#inputCategory').html(options)
+        }
+    });
+
+    if({{ article_id }}){
+        $(function () {
+            $.ajax({
+                url: '/cts/blog/api/article-retrieve/' + {{ article_id }} + '/',
+                type: 'get',
+                data: {},
+                dataType: 'JSON',
+                async: false,
+                success: function (data) {
+                    fillValue(data);
+                },
+                error: function (e) {
+                    alert('error')
+                }
+            });
+        });
+
+        function fillValue(data) {
+            document.getElementById('inputTitle').value = data['title'];
+            editor.html(data['content']);
+            document.getElementById('inputLabel').value = data['label'];
+            document.getElementById('inputCategory').value = data['category'];
+            document.getElementById('inputFile').value = data['file_field'];
+            $("input[name='state'][value=id]".replace(/id/, data['state'])).attr("checked",true);
+        }
+    }
+</script>
+
+<script>
+{#    $('#editArticle').submit(function (){#}
+    function submitEdit() {
+        editor.sync();
+        if (formCheck()){
+            if ({{ article_id }}) {
+                var url = '/cts/blog/api/article-retrieve/' + {{ article_id }} +'/';
+                var type = 'PUT';
+                var back_url = '/cts/blog/center/';
+            }
+            else {
+                var url = "/cts/blog/api/article-retrieve/";
+                var type = 'POST';
+                var back_url = '/cts/blog/';
+            }
+
+            var form = new FormData(document.getElementById("editArticle"));
+            $.ajax({
+                url: url,
+                type: type,
+                data: form,
+                processData: false,
+                contentType: false,
+                async: false,
+                success: function (data) {
+                    location.href = back_url;
+                },
+                error: function (e) {
+                    alert('提交失败！');
+                }
+            });
+        }
+    }
+
+    //表单验证
+    function formCheck(){
+        var title = document.getElementById('inputTitle');
+        var content_value = $('#inputContent').val();
+        if(trim(title.value) === null || trim(title.value) === ""){
+             alert("标题不能为空！");
+             title.focus();
+             return false;
+        }
+        if(trim(content_value) === null || trim(content_value) === ""){
+             alert("内容不能为空！");
+             return false;
+        }
+        return true
+    }
+
+    function trim(str){ //删除左右两端的空格
+　　     return str.replace(/(^\s*)|(\s*$)/g, "");
+    }
+
+</script>
+
+{% endblock %}

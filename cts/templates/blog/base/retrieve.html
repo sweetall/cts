@@ -1,0 +1,170 @@
+{% extends "blog/../base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<!-- Main content -->
+<section class="content">
+    <!-- Box Comment -->
+    <div class="row">
+
+        <div class="col-md-9">
+            <div class="box box-widget">
+                <div id="article">
+                    <div class="box-header with-border">
+                        <h4>{{ article_data.title }}</h4>
+                    </div>
+                    <!-- /.box-header -->
+                    <div class="box-body">
+                        <!-- post text -->
+                        <p>{{ article_data.content | safe }}</p>
+                        {% if article_data.file_field %}
+                            <div style="margin-bottom: 10px">附件：<a download="{{ article_data.file_name }}" href="{{ article_data.file_field }}">{{ article_data.file_name }}</a></div>
+                        {% endif %}
+                        <span class="text-muted"><bg>{{ article_data.create_time }}</bg></span>
+                        <span class="pull-right text-muted" style="margin-top: 5px;">
+                            <i class="fa fa-comments-o pull-right" style="width: 45px">&nbsp;{{ article_data.summary.comment_count }}</i>
+                            <i class="fa fa-star-o pull-right" style="width: 45px">&nbsp;{{ article_data.summary.collect_count }}</i>
+                            <i class="fa fa-thumbs-o-up pull-right" style="width: 45px">&nbsp;{{ article_data.summary.vote_count }}</i>
+                            <i class="fa fa-eye pull-right" style="width: 45px">&nbsp;{{ article_data.summary.click_count }}</i>
+                        </span>
+                        <div style="text-align: center; margin-bottom: 20px; margin-top: 20px">
+                            {% if article_data.vote_state %}
+                                <button type="button" onclick="postVote()" id="postVote" class="btn btn-default" style="margin-right: 50px;" disabled="disabled">
+                                <i class="fa fa-thumbs-o-up"></i>已点赞</button>
+                            {% else %}
+                                <button type="button" onclick="postVote()" id="postVote" class="btn btn-default" style="margin-right: 50px;">
+                                <i class="fa fa-thumbs-o-up"></i>点赞</button>
+                            {% endif %}
+                            {% if article_data.collect_state %}
+                                <button type="button" onclick="postCollect()" id="postCollect" class="btn btn-default" disabled="disabled">
+                                <i class="fa fa-star-o"></i>已收藏</button>
+                            {% else %}
+                                <button type="button" onclick="postCollect()" id="postCollect" class="btn btn-default">
+                                <i class="fa fa-star-o"></i>收藏</button>
+                            {% endif %}
+                        </div>
+                        {% if article_data.comments %}
+                            <div class="box-footer box-comments">
+                                {% for comment in article_data.comments %}
+                                    <div class="box-comment">
+                                        <img class="img-circle img-sm" src="{{ comment.portrait }}" alt="User Image">
+                                        <div class="comment-text">
+                                            <span class="username">{{ comment.username }}
+                                                <span class="text-muted pull-right">{{ comment.create_time }}</span>
+                                            </span>
+                                            <span>{{ comment.value | linebreaks }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <form role="form" id="commentSubmit">
+                        <!-- .img-push is used to add margin to elements next to floating images -->
+                        <div class="form-group form-inline">
+                            <div class="col-md-1">
+                                <img class="img-responsive img-circle img-sm" src="{{ user.portrait }}" alt="Alt Text">
+                            </div>
+                            <div class="col-md-11">
+                                <textarea id="inputContent" class="form-control" style="width: 100%; margin-left: -20px" name="value" rows="5" cols="80"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                    <center><button style="width: 60px; margin: 20px" onclick="commentSubmit()" class="btn btn-primary">评论</button></center>
+                </div>
+                <!-- /.box-footer -->
+            </div>
+        </div>
+        <div class="col-md-3">
+
+            <!-- Profile Image -->
+            <div class="box box-primary" id="authorProfile">
+                <div class="box-body box-profile">
+                    <img class="profile-user-img img-responsive img-circle" src="{{ article_data.portrait }}" alt="User profile picture">
+                    <h3 class="profile-username text-center">{{ article_data.username }}</h3>
+{#                        <p class="text-muted text-center">{{ article_data.nickname }}</p>#}
+                    <a href="/cts/blog/?creator={{ article_data.creator }}
+                    " class="btn btn-primary btn-block">TA的全部博文</a>
+                </div>
+            </div>
+            <div class="box" id="authorClickTop5">
+                <div class="box-header">
+                    <h3 class="box-title">TA的浏览量TOP5</h3>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body no-padding">
+                    <table class="table table-striped">
+                        {% for article in click_top5 %}
+                            <tr>
+                                <td><a href="/cts/blog/{{ article.id }}/">{{ article.title }}</a></td>
+                                <td><span class="badge bg-red pull-right">{{ article.summary.click_count }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            <!-- /.box -->
+
+        </div>
+
+    </div>
+</section>
+<!-- /.content -->
+{% endblock %}
+
+{% block script %}
+<script>
+$('#nowStation').html('浏览博文');
+
+function commentSubmit(){
+    if ($('#inputContent').val().length > 500){
+        alert('评论字数不可超过500，请检查！');
+        return
+    }
+    var form = new FormData(document.getElementById("commentSubmit"));
+    form.append('article', {{ article_id }});
+    $.ajax({
+        url:"/cts/blog/api/comment/",
+        type:"POST",
+        data:form,
+        processData:false,
+        contentType:false,
+        success:function(data){
+            window.location.reload();
+        }
+    });
+}
+</script>
+
+<script>
+function postCollect() {
+    $.ajax({
+        url: '/cts/blog/api/collect/',
+        type: 'post',
+        data: {"article": {{article_id}}},
+        dataType: 'JSON',
+        success: function (data) {
+            alert('收藏成功！');
+            window.location.reload()
+        }
+    });
+}
+
+function postVote() {
+    $.ajax({
+        url: '/cts/blog/api/vote/',
+        type: 'post',
+        data: {"article": {{article_id}}},
+        dataType: 'JSON',
+        success: function (data) {
+            window.location.reload()
+        }
+    });
+}
+</script>
+
+{% endblock %}

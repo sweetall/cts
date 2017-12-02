@@ -1,0 +1,58 @@
+[
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 1,
+      "value": "其他",
+      "describe": "默认导航，不可删除"
+    }
+  },
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 2,
+      "value": "大数据",
+      "describe": "大数据相关理论与实践"
+    }
+  },
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 3,
+      "value": "运维相关",
+      "describe": "运维相关理论与实践"
+    }
+  },
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 4,
+      "value": "Linux",
+      "describe": "Linux相关知识"
+    }
+  },
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 5,
+      "value": "数据库",
+      "describe": "数据库相关知识"
+    }
+  },
+  {
+    "model": "blog.navigation",
+    "fields": {
+      "id": 6,
+      "value": "开发语言",
+      "describe": "各种开发语言相关知识"
+    }
+  },
+  {
+    "model": "blog.category",
+    "fields": {
+      "id": 1,
+      "value": "未分类",
+      "describe": "默认分类，不可删除"
+    }
+  }
+]

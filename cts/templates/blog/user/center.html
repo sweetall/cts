@@ -1,0 +1,368 @@
+{% extends "blog/../base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<!-- Main content -->
+<section class="content">
+    <!-- Box Comment -->
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Widget: user widget style 1 -->
+            <div class="box box-widget widget-user" style="margin-bottom: 0">
+                <!-- Add the bg color to the header using any of the bg-* classes -->
+                <div class="widget-user-header bg-black" style="background: url('{% static "dist/img/photo1.png" %}') center;">
+                </div>
+                <div class="widget-user-image">
+                  <img class="img-circle" src="{{ user.portrait }}" alt="User Avatar">
+                </div>
+                <div class="box-footer" style="text-align: center">
+                    <h3>{{ user.username }}</h3>
+                </div>
+            </div>
+            <!-- /.widget-user -->
+
+            <div class="nav-tabs-custom" style="margin-top: 0;">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#myArticles" data-toggle="tab">我的博文</a></li>
+                    <li><a href="#myCollects" onclick="loadCollects()" data-toggle="tab">我的收藏</a></li>
+                    <li><a href="#myMessages" onclick="loadMessages()" data-toggle="tab">我的消息</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="active tab-pane" id="myArticles">
+                        <div class="box-body no-padding" id="articles"></div>
+                        <div style="text-align: center"> <ul id="paginator1"></ul> </div>
+                    </div>
+                    <div class="tab-pane" id="myCollects">
+                        <!-- /.box-header -->
+                        <div class="box-body no-padding" id="collects"></div>
+                        <!-- /.box-body -->
+                        <div style="text-align: center"> <ul id="paginator2"></ul> </div>
+                    </div>
+                    <div class="tab-pane" id="myMessages">
+                        <!-- /.box-header -->
+                        <div class="box-body no-padding" id="messages"></div>
+                        <!-- /.box-body -->
+                        <div style="text-align: center"> <ul id="paginator3"></ul> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.col -->
+    </div>
+</section>
+<!-- /.content -->
+{% endblock %}
+
+{% block script %}
+<script>
+    $('#nowStation').html('个人中心');
+    var retrieve_url = '/cts/blog/';
+    onload = loadArticles();
+
+    function loadArticles() {
+        $.ajax({
+            url: '/cts/blog/api/article-retrieve/',
+            type: 'get',
+            data: {'creator': {{ user.user }}},
+            dataType: 'JSON',
+            success: function (data) {
+                createArticleList(data);
+
+                $('#paginator1').bootstrapPaginator({
+                    currentPage: 1,
+                    totalPages: Math.ceil(data['count'] / 10),
+                    size: "normal",
+                    bootstrapMajorVersion: 3,
+                    alignment: "right",
+                    numberOfPages: 8,
+                    itemTexts: function (type, page, current) {
+                        switch (type) {
+                            case "first":
+                                return "首页";
+                            case "prev":
+                                return "上一页";
+                            case "next":
+                                return "下一页";
+                            case "last":
+                                return "末页";
+                            case "page":
+                                return page;
+                        }//默认显示的是第一页。
+                    },
+                    onPageClicked: function (event, originalEvent, type, page) {//给每个页眉绑定一个事件，其实就是ajax请求，其中page变量为当前点击的页上的数字。
+                        {#                    alert(page);#}
+                        $.ajax({
+                            url: '/cts/blog/api/article-retrieve/',
+                            type: 'get',
+                            data: {'creator': {{ user.user }}, 'page': page},
+                            dataType: 'JSON',
+                            success: function (data) {
+                                createArticleList(data);
+                            }
+                        });
+                    }
+                })
+            }
+        });
+    }
+
+    function loadCollects() {
+        $.ajax({
+            url: '/cts/blog/api/collect/',
+            type: 'get',
+            data: {'creator': {{ user.user }}},
+            dataType: 'JSON',
+            success: function (data) {
+                createCollectList(data);
+
+                $('#paginator2').bootstrapPaginator({
+                    currentPage: 1,
+                    totalPages: Math.ceil(data['count'] / 10),
+                    size: "normal",
+                    bootstrapMajorVersion: 3,
+                    alignment: "right",
+                    numberOfPages: 8,
+                    itemTexts: function (type, page, current) {
+                        switch (type) {
+                            case "first":
+                                return "首页";
+                            case "prev":
+                                return "上一页";
+                            case "next":
+                                return "下一页";
+                            case "last":
+                                return "末页";
+                            case "page":
+                                return page;
+                        }//默认显示的是第一页。
+                    },
+                    onPageClicked: function (event, originalEvent, type, page) {
+                        $.ajax({
+                            url: '/cts/blog/api/collect/',
+                            type: 'get',
+                            data: {'creator': {{ user.user }}, 'page': page},
+                            dataType: 'JSON',
+                            success: function (data) {
+                                createCollectList(data);
+                            }
+                        });
+                    }
+                })
+            }
+        });
+    }
+
+    function loadMessages() {
+        $.ajax({
+            url: '/cts/blog/api/message/',
+            type: 'get',
+            data: {'author': {{ user.user }}},
+            dataType: 'JSON',
+            success: function (data) {
+                createMessageList(data);
+
+                $('#paginator3').bootstrapPaginator({
+                    currentPage: 1,
+                    totalPages: Math.ceil(data['count'] / 10),
+                    size: "normal",
+                    bootstrapMajorVersion: 3,
+                    alignment: "right",
+                    numberOfPages: 8,
+                    itemTexts: function (type, page, current) {
+                        switch (type) {
+                            case "first":
+                                return "首页";
+                            case "prev":
+                                return "上一页";
+                            case "next":
+                                return "下一页";
+                            case "last":
+                                return "末页";
+                            case "page":
+                                return page;
+                        }//默认显示的是第一页。
+                    },
+                    onPageClicked: function (event, originalEvent, type, page) {
+                        $.ajax({
+                            url: '/cts/blog/api/message/',
+                            type: 'get',
+                            data: {'author': {{ user.user }}, 'page': page},
+                            dataType: 'JSON',
+                            success: function (data) {
+                                createMessageList(data);
+                            }
+                        });
+                    }
+                })
+            }
+        });
+    }
+
+    function createArticleList(data) {
+        var article_list = [
+            '<table class="table table-striped">',
+            '<tr>',
+                '<th style="width: 40%">标题</th>',
+                '<th style="width: 10%; text-align: center">浏览</th>',
+                '<th style="width: 10%; text-align: center">赞</th>',
+                '<th style="width: 10%; text-align: center">收藏</th>',
+                '<th style="width: 10%; text-align: center">分类</th>',
+                '<th style="width: 10%; text-align: center">状态</th>',
+                '<th style="width: 10%; text-align: center">操作</th>',
+            '</tr>'
+        ].join('');
+        for (var i in data['results']){
+            var article = [
+                '<tr>',
+                    '<td>','<a href="',retrieve_url + data['results'][i]['id'],'/">',data['results'][i]['title'],'</a></td>',
+                    '<td style="text-align: center">',data['results'][i]['summary']['click_count'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['summary']['vote_count'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['summary']['collect_count'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['category_value'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['state_value'],'</td>',
+                    '<td style="text-align: center">',
+                        '<button type="button" onclick="turnToModify(article_id)"'.replace(/article_id/,data['results'][i]['id']),
+                        'class="btn btn-default btn-xs" style="margin-right: 10px">',
+                        '编辑</button>',
+                        '<button type="button" onclick="delArticle(',data['results'][i]['id'],')" class="btn btn-default btn-xs">',
+                        '删除</button>',
+                    '</td>',
+                '</tr>'
+            ].join('');
+            article_list = article_list + article
+        }
+        article_list = article_list + '</table>';
+        $("#articles").html(article_list)
+    }
+
+    function createCollectList(data) {
+        var article_list = [
+            '<table class="table table-striped">',
+            '<tr>',
+                '<th style="width: 50%">标题</th>',
+                '<th style="width: 10%; text-align: center">分类</th>',
+                '<th style="width: 15%; text-align: center">作者</th>',
+                '<th style="width: 15%; text-align: center">收藏时间</th>',
+                '<th style="width: 10%; text-align: center">操作</th>',
+            '</tr>'
+        ].join('');
+        for (var i in data['results']){
+            var article = [
+                '<tr>',
+                    '<td>','<a href="',retrieve_url + data['results'][i]['article'],'/">',data['results'][i]['article_title'],'</a></td>',
+                    '<td style="text-align: center">',data['results'][i]['article_category'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['article_author'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['create_time'],'</td>',
+                    '<td style="text-align: center">',
+                        '<button type="button" onclick="delCollect(',data['results'][i]['id'],')" class="btn btn-default btn-xs">',
+                        '取消收藏</button>',
+                    '</td>',
+                '</tr>'
+            ].join('');
+            article_list = article_list + article
+        }
+        article_list = article_list + '</table>';
+        $("#collects").html(article_list)
+    }
+
+    function createMessageList(data) {
+        var message_list = [
+            '<table class="table table-striped">',
+                '<tr>',
+                    '<th style="width: 45%">博文</th>',
+                    '<th style="width: 10%; text-align: center">来自</th>',
+                    '<th style="width: 20%; text-align: center">内容</th>',
+                    '<th style="width: 15%; text-align: center">时间</th>',
+                    '<th style="width: 10%; text-align: center">',
+                    '<a type="button" onclick="cleanMessages()">一键清除</a>',
+                    '</th>',
+                '</tr>'
+        ].join('');
+        var message_show = '';
+        for (var i in data['results']){
+            var message = [
+                '<tr>',
+                    '<td>','<a onclick="delMessageAndSkip(',data['results'][i]['id'],',',data['results'][i]['article'],')">',data['results'][i]['article_title'],'</a></td>',
+                    '<td style="text-align: center">',data['results'][i]['username'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['value'],'</td>',
+                    '<td style="text-align: center">',data['results'][i]['create_time'],'</td>',
+                    '<td style="text-align: center">',
+                        '<button type="button" onclick="delMessage(',data['results'][i]['id'],')" class="btn btn-default btn-xs">',
+                        '清除</button>',
+                    '</td>',
+                '</tr>'
+            ].join('');
+            message_show = message_show + message
+        }
+        message_list = message_list + message_show + '</table>';
+        $("#messages").html(message_list)
+    }
+
+    function turnToModify(article_id) {
+        location.href = '/cts/blog/' + article_id + '/update/'
+    }
+
+    function delArticle(article_id) {
+        if(confirm('确定删除？')){
+            $.ajax({
+                url: '/cts/blog/api/article-retrieve/' + article_id + '/',
+                type: 'delete',
+                data: {},
+                dataType: 'JSON',
+                success: function (data) {
+                    loadArticles()
+                },
+                error: function (data) {
+                    alert('error')
+                }
+            })
+        }
+    }
+
+    function delCollect(collect_id) {
+        if(confirm('确定取消收藏？')){
+            $.ajax({
+                url: '/cts/blog/api/collect/' + collect_id + '/',
+                type: 'delete',
+                data: {},
+                dataType: 'JSON',
+                success: function (data) {
+                    loadCollects();
+                },
+                error: function (data) {
+                    alert('error')
+                }
+            })
+        }
+    }
+
+    function delMessage(Message_id) {
+        $.ajax({
+            url: '/cts/blog/api/message/' + Message_id + '/',
+            type: 'delete',
+            data: {},
+            dataType: 'JSON',
+            success: function (data) {
+                loadMessages()
+            }
+        })
+    }
+
+    function cleanMessages() {
+        $.ajax({
+            url: '/cts/blog/api/message-list/',
+            type: 'get',
+            data: {'author': {{ user.user }}},
+            dataType: 'JSON',
+            success: function (data) {
+                for (var i in data){
+                    delMessage(data[i]['id'])
+                }
+                loadMessages();
+            }
+        })
+    }
+</script>
+{% endblock %}

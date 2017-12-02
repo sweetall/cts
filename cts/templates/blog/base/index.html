@@ -1,0 +1,177 @@
+{% extends "blog/../base.html" %}
+
+{% load staticfiles %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <!-- Main content -->
+    <section class="content">
+        <!-- Box Comment -->
+        <div class="row">
+            <div class="col-md-9">
+                <div class="box box-widget">
+                    <div id="article-list"></div>
+                </div>
+
+                <div style="text-align: center"> <ul id="paginator"></ul> </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="form-inline">
+                    <a href="{% url 'blog:create' %}" style="width: 45%; margin-bottom: 20px;" class="btn btn-primary">新建博文</a>
+                    <a href="{% url 'blog:center' %}" style="width: 45%;" class="btn btn-primary pull-right">个人中心</a>
+                </div>
+                <div class="box" id="click-top5"></div>
+                <div class="box" id="vote-top5"></div>
+
+            <!-- /.box -->
+            </div>
+
+        </div>
+    </section>
+    <!-- /.content -->
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    $('#nowStation').html('博文列表');
+    var retrieve_url = '/cts/blog/';
+    function get_list(data) {
+        var list='';
+        for (var i in data['results']){
+            var article = [
+                '<div class="box-header with-border">',
+                    '<div class="col-md-2" style="text-align: center">',
+                        '<img class="img-circle" src="',data['results'][i]['portrait'],
+                        '" alt="User Image" style="margin-top: 10px; width:70px"><br>',
+                        '<h5 class="username"><a href="/cts/blog/?creator=',data['results'][i]['creator'],'">',
+                        data['results'][i]['username'],'</a></h5>',
+                    '</div>',
+                    '<div class="col-md-10">',
+                        '<h4><a href="',retrieve_url + data['results'][i]['id'],'/" style="color: #333;">',
+                            data['results'][i]['title'],
+                        '</a></h4>',
+                        '<p style="color:#888">',data['results'][i]['content'],'</p>',
+                        <!-- Social sharing buttons -->
+                        '<span class="text-muted" style="margin-right: 20px">标签: ',data['results'][i]['label'],'</span>',
+                        '<span class="text-muted">',data['results'][i]['create_time'],'</span>',
+                        '<span class="pull-right text-muted">',
+                            '<i class="fa fa-comments-o pull-right" style="width: 45px">&nbsp;',data['results'][i]['summary']['comment_count'],'</i>',
+                            '<i class="fa fa-star-o pull-right" style="width: 45px">&nbsp;',data['results'][i]['summary']['collect_count'],'</i>',
+                            '<i class="fa fa-thumbs-o-up pull-right" style="width: 45px">&nbsp;',data['results'][i]['summary']['vote_count'],'</i>',
+                            '<i class="fa fa-eye pull-right" style="width: 45px">&nbsp;',data['results'][i]['summary']['click_count'],'</i>',
+                        '</span>',
+
+                    '</div>',
+                '</div>'
+            ].join('');
+            list = list + article
+        }
+        return list
+    }
+
+    function get_top5(item_zh, item_str, data) {
+        var box_html = [
+            '<div class="box-header">',
+                '<h3 class="box-title">',item_zh,'</h3>',
+            '</div>',
+            <!-- /.box-header -->
+            '<div class="box-body no-padding">',
+                '<table class="table table-striped">'
+            ].join('');
+
+            var table_html = '';
+            for (var i in data){
+                var tr_html = [
+                    '<tr>',
+{#                        '<td style="width: 6px">',parseInt(i)+1,'</td>',#}
+                        '<td><a href="', retrieve_url + data[i]['id'], '/">',data[i]['title'],'</td>',
+                        '<td class="pull-right"><span class="badge bg-red">',data[i]['summary'][item_str],'</span></td>',
+                    '</tr>'
+                ].join('');
+                table_html = table_html + tr_html
+            }
+            box_html = box_html + table_html + '</table></div>';
+        return box_html
+    }
+
+    $(function () {
+        var match_data = {};
+        if ({{ category }}){
+            match_data = {'category': {{ category }}};}
+        else if ('{{ search }}' !== '0'){
+            match_data = {'search': '{{ search }}'};}
+        else if ('{{ creator }}' !== '0'){
+            match_data = {'creator': '{{ creator }}'};}
+        $.ajax({
+            type: 'get',
+            url: '/cts/blog/api/article-list/',
+            data: match_data,
+            dataType: 'json',
+            success: function (data) {
+                if (data['count'] === 0){
+                    $("#article-list").html('<p>检索的博文暂时还木有，就差你来补充了。。。</p>')
+                }
+                else {
+                    $("#article-list").html(get_list(data));
+                    $('#paginator').bootstrapPaginator({
+                        currentPage: 1,
+                        totalPages: Math.ceil(data['count'] / 10),
+                        size: "normal",
+                        bootstrapMajorVersion: 3,
+                        alignment: "right",
+                        numberOfPages: 8,
+                        itemTexts: function (type, page, current) {
+                            switch (type) {
+                                case "first":
+                                    return "首页";
+                                case "prev":
+                                    return "上一页";
+                                case "next":
+                                    return "下一页";
+                                case "last":
+                                    return "末页";
+                                case "page":
+                                    return page;
+                            }//默认显示的是第一页。
+                        },
+                        onPageClicked: function (event, originalEvent, type, page) {
+                            match_data['page'] = page;
+                            $.ajax({
+                                url: '/cts/blog/api/article-list/',
+                                type: 'get',
+                                data: match_data,
+                                dataType: 'JSON',
+                                success: function (data) {
+                                    $("#article-list").html(get_list(data))
+                                }
+                            });
+                        }
+                    })
+                }
+
+            }
+        });
+    });
+
+    $.ajax({
+        url: '/cts/blog/api/click_top5/',
+        type: 'get',
+        data: {},
+        dataType: 'JSON',
+        success: function (data) {
+            $('#click-top5').html(get_top5('浏览量TOP5', 'click_count', data))
+        }
+    });
+
+    $.ajax({
+        url: '/cts/blog/api/vote_top5/',
+        type: 'get',
+        data: {},
+        dataType: 'JSON',
+        success: function (data) {
+            $('#vote-top5').html(get_top5('点赞量TOP5', 'vote_count', data))
+        }
+    });
+
+</script>
+{% endblock %}
