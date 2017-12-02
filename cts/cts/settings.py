@@ -132,9 +132,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'cts',
-        'USER': 'sweet',
-        'PASSWORD': '092397@Swt',
-        'HOST': '172.16.76.183',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
         'PORT': 3306
     }
 }
