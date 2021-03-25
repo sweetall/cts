@@ -36,7 +36,7 @@ Pygments==2.2.0
 python-memcached==1.58
 python-openid==2.2.5
 pytz==2017.2
-PyYAML==3.12
+PyYAML==5.4
 requests==2.18.1
 shellescape==3.4.1
 singledispatch==3.4.0.3
