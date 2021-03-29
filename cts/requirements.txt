@@ -32,7 +32,7 @@ Naked==0.1.31
 olefile==0.44
 Pillow==2.7.0
 pyasn1==0.2.3
-Pygments==2.2.0
+Pygments==2.7.4
 python-memcached==1.58
 python-openid==2.2.5
 pytz==2017.2
