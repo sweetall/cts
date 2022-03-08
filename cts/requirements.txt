@@ -20,7 +20,7 @@ futures==3.1.1
 gevent==1.2.2
 greenlet==0.4.12
 html5lib==0.999999999
-httpie==0.9.9
+httpie==3.1.0
 idna==2.5
 JPype1==0.6.2
 kombu==4.1.0
